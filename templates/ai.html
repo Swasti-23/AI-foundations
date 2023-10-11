@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Audio Recorder</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='ai.css') }}">
+
+</head>
+<body>
+    <h1>Audio Recorder</h1>
+    <button id="startRecording">Start</button>
+
+    <script>
+        // JavaScript to handle audio recording
+        const startButton = document.getElementById('startRecording');
+
+        // Initialize the MediaRecorder object
+        let mediaRecorder;
+        let audioChunks = [];
+
+        startButton.addEventListener('click', () => {
+            if (mediaRecorder && mediaRecorder.state === 'inactive') {
+                mediaRecorder.start();
+                startButton.textContent = 'Stop Recording';
+            } else if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                startButton.textContent = 'Start Recording';
+            }
+        });
+
+        // Check for browser support for MediaRecorder
+        if (navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    mediaRecorder = new MediaRecorder(stream);
+
+                    mediaRecorder.ondataavailable = event => {
+                        audioChunks.push(event.data);
+                    };
+
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { 'type': 'audio/wav' });
+                        const audioUrl = URL.createObjectURL(audioBlob);
+
+                        const audio = new Audio(audioUrl);
+                        audio.controls = true;
+                        document.body.appendChild(audio);
+
+                        audioChunks = [];
+                    };
+                })
+                .catch(error => {
+                    console.error('Error accessing microphone:', error);
+                });
+        } else {
+            alert('Your browser does not support audio recording.');
+        }
+    </script>
+</body>
+</html>
